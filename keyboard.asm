@@ -1,4 +1,4 @@
- ##############################################################################
+##############################################################################
 # Example: Keyboard Input
 #
 # This file demonstrates how to read the keyboard to check if the keyboard
@@ -11,6 +11,9 @@ displayaddress:     .word       0x10008000
 
 ADDR_KBRD:  
     .word 0xffff0000
+    
+    # Padding to give enough space for the display
+    .space 262144    # 256 x 256 x 4 = 262144
 
     .text
 	.globl main
@@ -33,7 +36,7 @@ main:
   addi $a2, $s0, 1088 #assigns the location of the first byte to be passed as an argument
   jal GENERATE_RANDOM_COLOR
   #sw $v0, 8($s1)
-  sw $v0, 1344($s0) #display the second pixel
+  sw $v0, 1600($s0) #display the second pixel
   j detect_keyboard_input
   
 
@@ -82,10 +85,10 @@ respond_to_A: #Should move the capsule to the left
     sw $t1, -4($a2) #Paint the pixel on the left of first pixel
     sw $zero, 0($a2) #Paint the first pixel to black
 
-    lw $t1, 256($a2) #change the 256/252 values accordingly
+    lw $t1, 512($a2) #change the 256/252 values accordingly
     beq $t1, $zero, rpixel_lmove
-    sw $t1, 252($a2)
-    sw $zero, 256($a2)
+    sw $t1, 508($a2)
+    sw $zero, 512($a2)
     addi $a2, $a2, -4
     j detect_keyboard_input
 
@@ -97,10 +100,10 @@ rpixel_lmove:
     j detect_keyboard_input
 
 respond_to_D: #Should move the capsule to the right
-    lw $t1, 256($a2) #change the 256/252 values accordingly
+    lw $t1, 512($a2) #change the 256/252 values accordingly
     beq $t1, $zero, rpixel_rmove
-    sw $t1, 260($a2)
-    sw $zero, 256($a2)
+    sw $t1, 516($a2)
+    sw $zero, 512($a2)
 
 lpixel_rmove:
     lw $t1, 0($a2) #Store the color value in the second pixel
@@ -118,53 +121,49 @@ rpixel_rmove:
 respond_to_E: #Should rotate the capsule by 90 degrees anti-clockwise
     lw $t1, 4($a2) #stores the color value of the pixel to the right of the first pixel
     beq $t1, $zero, bpixel_rotate_anti
-    sw $t1, -256($a2)
+    sw $t1, -512($a2)
     sw $zero, 4($a2)
-    addi $a2, $a2, -256
+    addi $a2, $a2, -512
     j detect_keyboard_input
 
 bpixel_rotate_anti:
     lw $t1, 0($a2)
-    sw $t1, 252($a2)
+    sw $t1, 508($a2)
     sw $zero, 0($a2)
-    addi $a2, $a2, 252
+    addi $a2, $a2, 508
     j detect_keyboard_input
 
 respond_to_W: #Should rotate capsule by 90 degrees clockwise
     lw $t1, 4($a2) #stores the color value of the pixel to the right of the first pixel
     beq $t1, $zero, bpixel_rotate_clock
     lw $t1, 0($a2)
-    sw $t1, -252($a2)
+    sw $t1, -508($a2)
     sw $zero, 0($a2)
-    addi $a2, $a2, -252
+    addi $a2, $a2, -508
     j detect_keyboard_input
 
 bpixel_rotate_clock:
     lw $t1, 0($a2)
-    sw $t1, 260($a2)
+    sw $t1, 516($a2)
     sw $zero, 0($a2)
-    addi $a2, $a2, 256
+    addi $a2, $a2, 512
     j detect_keyboard_input
 
 respond_to_S: #Should move the capsule to the bottom
     lw $t1, 4($a2)
     beq $t1, $zero, bpixel_down
-    sw $t1, 260($a2)
+    sw $t1, 516($a2)
     sw $zero, 4($a2)
 
 fpixel_down:
     lw $t1, 0($a2)
-    sw $t1, 256($a2)
+    sw $t1, 512($a2)
     sw $zero, 0($a2)
-    addi $a2, $a2, 256
+    addi $a2, $a2, 512
     j detect_keyboard_input
 
 bpixel_down:
-    lw $t1, 256($a2)
-    sw $t1, 512($a2)
-    sw $zero, 256($a2)
+    lw $t1, 512($a2)
+    sw $t1, 1024($a2)
+    sw $zero, 512($a2)
     j fpixel_down
-
-
-
-  
