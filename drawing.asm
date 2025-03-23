@@ -1,8 +1,3 @@
-##############################################################################
-# Draws lines + pixels
-# Given x, y, length, and a direction, this draws the line
-# If given length 1, a single pixel is drawn
-##############################################################################
     .data
 ADDR_DSPL:
     .word 0x10008000 # The address of the bitmap display.
@@ -14,9 +9,6 @@ ADDR_DSPL:
 	.globl main
 
 main:
-    #######################################################
-    # Draws Container
-    #######################################################
     li $t1, 0xff0000        # $t1 = red
     li $t2, 0x00ff00        # $t2 = green
     li $t3, 0x0000ff        # $t3 = blue
@@ -38,41 +30,41 @@ main:
     
     ## Call below function to draw container ##
     # left entry wall
-    addi $a0, $zero, 40   # X
-    addi $a1, $zero, 40   # Y
-    addi $a2, $zero, 4  # Length
-    addi $a3, $zero, 512 # determines directions of line. 128 for vertical, 4 for horizontal
+    addi $a0, $zero, 15   # X
+    addi $a1, $zero, 10   # Y
+    addi $a2, $zero, 3  # Length
+    addi $a3, $zero, 256 # determines directions of line. 256 for vertical, 4 for horizontal
     jal initialize_and_draw
     
     # top left wall
     # No need to reset x and y, since we want them to stay the same
-    addi $a2, $zero, 36  # Length
+    addi $a2, $zero, 8  # Length
     addi $a3, $zero, -4 # direction
     jal draw_line
     
     # left wall
-    addi $a2, $zero, 100  # Length
-    addi $a3, $zero, 512 # direction
+    addi $a2, $zero, 25  # Length
+    addi $a3, $zero, 256 # direction
     jal draw_line
     
     # bottom wall
-    addi $a2, $zero, 80  # Length
+    addi $a2, $zero, 20  # Length
     addi $a3, $zero, 4   # direction
     jal draw_line
     
     # right wall
-    addi $a2, $zero, 100  # Length
-    addi $a3, $zero, -512 # direction
+    addi $a2, $zero, 25  # Length
+    addi $a3, $zero, -256 # direction
     jal draw_line
     
     # top right wall
-    addi $a2, $zero, 36  # Length
+    addi $a2, $zero, 8  # Length
     addi $a3, $zero, -4 # direction
     jal draw_line
     
     # right entry wall
-    addi $a2, $zero, 5  # Length
-    addi $a3, $zero, -512 # direction
+    addi $a2, $zero, 4  # Length
+    addi $a3, $zero, -256 # direction
     jal draw_line
 
     j exit     # Skips the line function, so it doesn't get called accidentally
