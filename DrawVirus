@@ -1,0 +1,86 @@
+    .data
+image:              .word 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 
+                          1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0,
+                          0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0,
+                          0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0,
+                          0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+                          0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 
+                          0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 
+                          0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0,
+                          1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0,
+                          0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                          0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 
+                          1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0,
+                          0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 
+                          0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0
+displayaddress:     .word       0x10008000
+displayaddress2:    .word       0x10008080
+displayaddress3:    .word       0x10009044
+    
+    # Padding to give enough space for the display
+    .space 262144    # 256 x 256 x 4 = 262144
+
+    .text
+	.globl main
+
+#DONT USE: t0, s0, s1 again
+main:
+    li $s2, 0xff0000        # $t1 = red
+    li $t3, 0x00ff00        # $t2 = green
+    li $s3, 0x0000ff        # $t3 = blue
+    add $s4, $s2, $t3       # $t5 = yellow
+    addi $s5, $zero, 0xffffff # $t6 = white
+    la $s0, image       # Load address of image data
+    lw $s1, displayaddress  # Framebuffer base address
+    lw $s6, displayaddress2
+    lw $s7, displayaddress3
+
+    addi $t1, $zero, 48 #column number
+    addi $t2, $zero, 0 #index 
+    addi $t7, $zero, 4 #number to increment by
+    addi $t5, $zero, 15 #row number
+
+    add $v0, $s2, $zero
+    add $v1, $s1, $zero
+    jal Initialize_loop
+    add $v0, $s3, $zero
+    add $v1, $s6, $zero
+    jal Initialize_loop
+    add $v0, $s4, $zero
+    add $v1, $s7, $zero
+    jal Initialize_loop
+    j end
+
+Initialize_loop:
+    addi $t1, $zero, 48 #column number
+    addi $t2, $zero, 0 #index 
+    addi $t7, $zero, 4 #number to increment by
+    addi $t5, $zero, 15 #row number
+Loop:
+    div $t2, $t1 #find which row and column we are
+    mfhi $t8 #remainder
+    mflo $t4 #result
+    beq $t4, $zero, Inside #If column == 0, continue to inside of the loop
+    beq $t8, $zero, increment_y #if row == 0, increment y by 1 (address by 256)
+
+Inside:
+    add $t9, $v1, $t8 # t9 = display address[i] in the current row
+    add $t3, $t2, $s0 # t3 = image[i]
+    lw $t3, 0($t3) #Load the value at index image[i]
+    addi $t2, $t2, 4 #Increment i by 4
+    beq $t3, 0, Loop #Check if value at image[i] is 0, if yes then skip
+    sw $v0, 0($t9) #Draw a colored pixel at index display_address[i]
+    j Loop #continue looping
+
+increment_y:
+    addi $v1, $v1, 256 #increment address by 1 row
+    beq $t4, $t5, end_drawing #Check if we have reached the 15th row, end the program if we have
+    j Inside #jump to where you were called
+
+end_drawing:
+  jr $ra
+
+end:
+    li $v0, 10          # Exit program
+    syscall
