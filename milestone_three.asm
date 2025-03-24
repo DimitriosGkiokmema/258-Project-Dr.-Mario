@@ -223,7 +223,6 @@ exit_row_loop:
 # $t6 previous bitmap colour: The colour of the previous block that was checked
 # $t7 column count: used to tell the index of the current column
 #########################################################
-    
 ############################################
 # Loop to find and delete HORIZONTAL blocks
 ############################################
@@ -281,20 +280,21 @@ reset_horizontal_counter:
     
 horizontal_decrement:
     # Decrimenting loop variables for the delete funciton (delete_consecutive_blocks)
+    # This is preparing the index value for the next iteration of the loop
     # If col = 0, the bitmap address needs to be at the end of the above row
     beq $t7, $zero, horizontal_special_decrement 
-    add $t1, $t1, -4    # Moves bitmap index to the left block
-    j horizontal_default_decrement
+    addi $t7, $t7, -1       # Decriments column index
+    add $t0, $t0, -4        # Decrimenting array address
+    j horizontal_save_colour
 horizontal_special_decrement:
+    li $t7, 18          # Reseting the column index
+    add $t1, $t1, -4    # Moves bitmap index to the left block
     add $t1, $t1, -184    # Decrimenting bitmap address so that the next location is at the end of the row above in the bottle
     li $t4, 0        # Sets the counter to 0. This is incremented each time we find a non-empty spot on the grid
                      # As this is the end of the row, this count must be reset
     
-horizontal_default_decrement:   # This will be called at EACH loop iteration, as $t0 and $t4 must always be decrimented
-    # This is preparing the index value for the next iteration of the loop
-    add $t0, $t0, -4        # Decrimenting array address
+horizontal_save_colour:   # This will be called at EACH loop iteration, as $t0 and $t4 must always be decrimented
     add $t6, $zero, $t5     # Stores the colour of this iteration in $t6 to be used in the next iteration
-    addi $t7, $t7, -1       # Decriments column index
     
     # Loop again
     j horizontal_loop       # calls the next iteration of the outer loop
@@ -374,11 +374,13 @@ vertical_decrement:
     # Decrimenting loop variables for the delete funciton (delete_consecutive_blocks)
     # If row = 0, the bitmap address needs to be at the end of the above row
     beq $t7, $zero, vertical_special_decrement 
-    add $t1, $t1, -256       # Decrimenting the bitmap index to [r][c + 1
+    addi $t7, $t7, -1       # Decriments column index
+    add $t1, $t1, -256       # Decrimenting the bitmap index to [r][c - 1]
     add $t0, $t0, -76        # Decrimenting array address to be at [r][c -1]
     j vertical_default_decrement
 vertical_special_decrement:
-    add $t1, $t1, 5884    # Incrementing bitmap address so that the next location is at the bottom of the left col
+    li $t7, 23               # Reset the row counter
+    add $t1, $t1, 5884    # Incrementing bitmap address to be at [r + 1][c]
     add $t0, $t0, -76     # Incrementing array address to be at [r + 1][c]
     li $t4, 0        # Sets the counter to 0. This is incremented each time we find a non-empty spot on the grid
                      # As this is the end of the row, this count must be reset
@@ -386,7 +388,6 @@ vertical_special_decrement:
 vertical_default_decrement:   # This will be called at EACH loop iteration, as $t0 and $t4 must always be decrimented
     # This is preparing the index value for the next iteration of the loop
     add $t6, $zero, $t5     # Stores the colour of this iteration in $t6 to be used in the next iteration
-    addi $t7, $t7, -1       # Decriments column index
     
     # Loop again
     j vertical_loop       # calls the next iteration of the outer loop
