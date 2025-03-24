@@ -9,7 +9,7 @@ color_array:        .space      12
 pill_array:         .space      16
 ADDR_DSPL:          .word 0x10008000 # The address of the bitmap display.
 ADDR_KBRD:          .word 0xffff0000
-block_array:        .space 12
+block_array:        .space 24
 grid:               .word 0:456     # Array of all pixels in the bottle
                                     # 24 row * 19 column grid = 456 elements
                                     # Values: 0 empty spot,         In Memory:  0x0
@@ -30,7 +30,6 @@ main:
 
     #DON'T CHANGE:
       #-Any s registers
-      #-t0
       
     #######################################################
     # Draws Container
@@ -53,6 +52,13 @@ main:
     sw $t1, 0($s7) # block_array[0] = 's'
     sw $t2, 4($s7) # block_array[1] = 'u'
     sw $t3, 8($s7) # block_array[2] = 'd'
+    li $t1, 0x6c # $t1 = 'l'
+    li $t2, 0x72 # $t1 = 'r'
+    li $t3, 0x76 # $t1 = 'v'
+    sw $t1, 12($s7)
+    sw $t2, 16($s7)
+    sw $t3, 20($s7)
+    
     la $s6, grid            # $s1 holds the address of grid
     
     
@@ -164,6 +170,7 @@ GENERATE_PILL:
   
   implement_gravity:
     jal Gravity  # Simulates gravity
+  continue_gravity:
     b detect_keyboard_input
   
   keyboard_input:                     # A key is pressed
@@ -271,9 +278,13 @@ GENERATE_PILL:
     sw $zero, 4($a2)
     addi $a2, $a2, -256
 
-    lw $t1, 4($a3)
-    sw $t1, -76($a3)
+
     sw $zero, 4($a3)
+    li $t1, 0x64 #'d'
+    sw $t1, -76($a3)
+    li $t1, 0x75 #'u'
+    sw $t1, 0($a3)
+    
     addi $a3, $a3, -76
     
     j implement_gravity
@@ -284,9 +295,12 @@ GENERATE_PILL:
     sw $zero, 0($a2)
     addi $a2, $a2, 252
 
-    lw $t1, 0($a3)
-    sw $t1, 72($a3)
+
     sw $zero, 0($a3)
+    li $t1, 0x6c #'l'
+    sw $t1, 76($a3)
+    li $t1, 0x72
+    sw $t1, 72($a3)
     addi $a3, $a3, 72
     
     j implement_gravity
@@ -299,9 +313,11 @@ GENERATE_PILL:
     sw $zero, 0($a2)
     addi $a2, $a2, -252
 
-    lw $t1, 0($a3)
-    sw $t1, -72($a3)
     sw $zero, 0($a3)
+    li $t1, 0x75 # 'u'
+    sw $t1, 4($a3)
+    li $t1, 0x64 # 'd'
+    sw $t1, -72($a3)
     addi $a3, $a3, -72
     
     j implement_gravity
@@ -312,9 +328,11 @@ GENERATE_PILL:
     sw $zero, 0($a2)
     addi $a2, $a2, 256
 
-    lw $t1, 0($a3)
-    sw $t1, 80($a3)
     sw $zero, 0($a3)
+    li $t1, 0x72 # 'r'
+    sw $t1, 76($a3)
+    li $t1, 0x6c # 'l'
+    sw $t1, 80($a3)
     addi $a3, $a3, 76
     
     j implement_gravity
@@ -384,9 +402,65 @@ Gravity:
   check_d:
     lw $t3, 8($s7)  # loads first block value from block_array: 'd'
     beq $t2, $t3, check_below_row
+
+  check_l:
+    lw $t3, 12($s7)  # loads first block value from block_array: 'l'
+    beq $t2, $t3, check_bottom_left
     
     # If this is reached, the above beq were false, so check_below_row should be skipped
     j decrement
+
+  check_bottom_left:
+    lw $t2, 72($t0) # Loads the value in the grid array at [r + 1][c - 1]
+                      # [r + 1][c - 1] in this case is #t0 + 18 * 4 = $t0 + 72
+    beq $t2, $zero, check_right   # [r + 1][c - 1] is empty, so we check [r + 1][c]
+
+    # If this is reached, the above beq were false, so check_right should be skipped
+    j decrement
+  check_right:
+    lw $t2, 76($t0) # Loads the value in the grid array at [r + 1][c]
+                      # [r + 1][c] in this case is #t0 + 19 * 4 = $t0 + 76
+    beq $t2, $zero, move_down_horizontal_pill   # [r + 1][c] is also empty, so we can move down the piece
+
+    # If this is reached, the above beq were false, so move_down_horizontal_pill should be skipped
+    j decrement
+  move_down_horizontal_pill:
+    lw $t2, 0($t0)
+    sw $t2, 76($t0)     # Stores the value of [r][c] to [r + 1][c]
+    sw $zero, 0($t0)    # Clears the value of [r][c] as we just moved it
+    addi $t0, $t0, -4   # Moves index to the left so that we can move the left block down
+                        # Thus, we are now at [r][c - 1]
+    lw $t2, 0($t0)
+    sw $t2, 76($t0)     # Stores the value of [r][c - 1] to [r + 1][c - 1]
+    sw $zero, 0($t0)    # Clears the value of [r][c - 1] as we just moved it
+    addi $t0, $t0, 4    # Moves index back to its original position
+
+    addi $t5, $s0, 3356 #it does access the top left block 
+    addi $t6, $zero, 4
+    div $t4, $t6
+    mflo $t7
+    addi $t6, $zero, 19
+    div $t7, $t6
+    mflo $t6 #row
+    mfhi $t8 #column
+    sll $t8, $t8, 2 #multiply by 4
+    sll $t6, $t6, 8 #multiply by 256
+    addi $t8, $t8, 256 #check sometime --> why we don't need to add 4 sideways as well
+    add $t5, $t5, $t8
+    add $t5, $t5, $t6
+
+    jal change_as_horizontal
+
+   continue_bring_down_for_horizontal:
+    lw $t6, 0($t5)
+    sw $t6, 256($t5)
+    sw $zero, 0($t5)
+
+    lw $t6, -4($t5)
+    sw $t6, 252($t5)
+    sw $zero, -4($t5)
+    
+    j decrement         # The horizontal pill has moved down
     
   check_below_row:
     lw $t2, 76($t0) # Loads the value in the grid array right below the current index
@@ -401,7 +475,7 @@ Gravity:
     sw $t2, 76($t0)     # Stores the value of [r][c] to [r + 1][c]
     sw $zero, 0($t0)    # Clears the value of [r][c] as we just moved it
     
-    #sub $t5, $zero, $t4 #Something wrong with the draw function --> fix it
+    #sub $t5, $zero, $t4 
     #add $t6, $t5, 1748 #index of element
     #add $t6, $t6, $s0
     #lw $t7, 0($t6)
@@ -426,7 +500,6 @@ Gravity:
     lw $t6, 0($t5)
     sw $t6, 256($t5)
     sw $zero, 0($t5)
-     
     
   decrement:
     # Decrimenting loop variables
@@ -437,13 +510,20 @@ Gravity:
     j bring_down_loop               # calls the next iteration of the outer loop
     
   exit_row_loop:
-    jr $ra      # Jumps to update_matrix
+    j continue_gravity      # Jumps to update_matrix
 
-   change_as:
+  change_as:
     addi $a2, $a2, 256
     beq $a3, $zero, continue_bring_down
     addi $a3, $a3, 76
     j continue_bring_down
+
+
+  change_as_horizontal:
+    addi $a2, $a2, 256
+    beq $a3, $zero, continue_bring_down_for_horizontal
+    addi $a3, $a3, 76
+    jr $ra
     
 
 exit:
