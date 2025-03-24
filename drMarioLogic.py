@@ -7,10 +7,14 @@ Check:
 def update_matrix():
     print("\noriginal")
     printGrid()
-    bring_down()
+    bring_down() #
     print("\ngravity")
     printGrid()
-    delete()
+    delete() #
+    print("\ngravity")
+    bring_down() #
+    printGrid()
+    delete() #
 
 def bring_down():
     rows = len(matrix)
@@ -18,61 +22,83 @@ def bring_down():
 
     # Start from the second-to-last row and work upwards
     for r in range(rows - 2, -1, -1):
-        for c in range(cols):
-            if matrix[r][c] in {"s", "u"} and matrix[r + 1][c] == 0:
+        for c in range(cols - 1, -1, -1):
+            if (matrix[r][c] in {"s", "u", "d", "l", "r"}) and matrix[r + 1][c] == 0:
                 # Move the block down
                 matrix[r + 1][c] = matrix[r][c]
                 matrix[r][c] = 0
+            if (matrix[r][c] == "l" and matrix[r][c] == 0 and matrix[r][c - 1] == 0):
+                # Move the block down
+                matrix[r + 1][c] = matrix[r][c]
+                matrix[r][c] = 0
+            
 
 def delete():
     rows = len(matrix)
     cols = len(matrix[0])
-    to_delete = set()  # Keep track of coordinates to delete
 
     # Check for horizontal matches
-    for r in range(rows):
-        count = 1
-        for c in range(1, cols):
-            if matrix[r - 1][c] != 0 and matrix[r][c] != 0:
+    for r in range(rows - 1, -1, -1):
+        count = 0
+        for c in range(cols - 1, -1, -1):
+            if matrix[r][c] != 0: # AND COLOURS SAME
                 count += 1
                 if count >= 4:
-                    for k in range(count):
-                        to_delete.add((r, c - k))
+                    # Delete the blocks for the current match
+                    matrix[r][c + 3] = 0
+                    matrix[r][c + 2] = 0
+                    matrix[r][c + 1] = 0
+                    matrix[r][c] = 0
             else:
-                count = 1
-
+                count = 0
+    print("\nhorizontal delete")
+    printGrid()
     # Check for vertical matches
-    for c in range(cols):
-        count = 1
-        for r in range(1, rows):
-            if matrix[r - 1][c] != 0 and matrix[r][c] != 0:
+    for c in range(cols - 1, -1, -1):
+        count = 0
+        for r in range(rows - 1, -1, -1):
+            if matrix[r][c] != 0: # AND COLOURS SAME
                 count += 1
-                print(f"Elements the same on ({r}, {c}) and ({r - 1}, {c})")
                 if count >= 4:
-                    for k in range(count):
-                        to_delete.add((r - k, c))
+                    # Delete the blocks for the current match
+                    matrix[r + 3][c] = 0
+                    matrix[r + 2][c] = 0
+                    matrix[r + 1][c] = 0
+                    matrix[r][c] = 0
             else:
-                count = 1
-
-    # Delete the blocks by setting them to 0
-    for r, c in to_delete:
-        matrix[r][c] = 0
+                count = 0
+    print("\nvertical delete")
+    printGrid()
 
 def printGrid():
     for row in matrix:
         print(row)
 
 # Example matrix
-matrix = [["s", 0, 0, 0],
-          [0, 0, 0, 0],
-          ["s", "s", 0, 0],
-          ["d", 0, "d", 0],
-          ["u", 0, "u", 0]]
+matrix = [["s", 0, 0, 0, 0],
+          ["s", 0, 0, 0, 0],
+          ["s", "s", 0, 0, 0],
+          ["d", "s", "d", "v", "v"],
+          ["u", 0, "u", 0, 0]]
 
 # Update the matrix in place
 update_matrix()
-print("\nfinal")
 
-# Print the updated matrix
-for row in matrix:
-    print(row)
+# Another example
+matrix = [["s", 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          ["v", 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          ["s", 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          ["v", 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          ["r", "l", "s", 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, "v", 0, 0, 0, 0, 0, 0],
+          ["v", 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          ["v", 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          ["v", 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          ["v", 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          ["v", 0, 0, 0, 0, 0, "s", 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, "v", "r", "l"]]
+
+# Update the matrix in place
+update_matrix()
