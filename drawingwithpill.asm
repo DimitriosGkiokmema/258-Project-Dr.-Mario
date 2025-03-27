@@ -141,6 +141,7 @@ GENERATE_PILL:
     sw $v0, 2884($s0) #display the second pixel
     add $t6, $zero, 0 #counter for the S key
     add $a3, $zero, 0
+    add $t5, $zero, 0
     j detect_keyboard_input
     
   
@@ -171,6 +172,9 @@ GENERATE_PILL:
   implement_gravity:
     jal Gravity  # Simulates gravity
   continue_gravity:
+    blez $t5, loop_keyboard_detect
+    blez $t1, GENERATE_PILL
+  loop_keyboard_detect:
     b detect_keyboard_input
   
   keyboard_input:                     # A key is pressed
@@ -203,6 +207,14 @@ GENERATE_PILL:
   	syscall
   
   respond_to_A: #Should move the capsule to the left
+    lw $a1, 0($a3) #r or d?
+    lw $t2, 16($s7) #load r
+    beq $a1, $t2, check_ll_empty
+    lw $t2, 8($s7) #load d
+    beq $a1, $t2, check_dl_empty
+    j implement_gravity
+
+   continue_A: 
     lw $t1, 0($a2) #Store the color value in the first pixel
     sw $t1, -4($a2) #Paint the pixel on the left of first pixel
     sw $zero, 0($a2) #Paint the first pixel to black
@@ -212,7 +224,8 @@ GENERATE_PILL:
     sw $zero, 0($a3) #change the value of the first pixel in the grid array
     
     lw $t1, 256($a2) #change the 256/252 values accordingly
-    beq $t1, $zero, rpixel_lmove
+    lw $t2, 16($s7) #load r
+    beq $a1, $t2, rpixel_lmove
     sw $t1, 252($a2)
     sw $zero, 256($a2)
     addi $a2, $a2, -4
@@ -223,7 +236,7 @@ GENERATE_PILL:
     addi $a3, $a3, -4
     
     j implement_gravity
-  
+
   rpixel_lmove:
     lw $t1, 4($a2) #Store the color value in the first pixel
     sw $t1, 0($a2) #Paint the pixel on the left of first pixel
@@ -236,10 +249,30 @@ GENERATE_PILL:
     addi $a3, $a3, -4 #fix the a3 value
     
     j implement_gravity
+
+  check_ll_empty:
+    lw $t1, -4($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_A
+  check_dl_empty:
+    lw $t1, 252($a2)
+    bne $t1, $zero, implement_gravity
+    lw $t1, -4($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_A
   
   respond_to_D: #Should move the capsule to the right
+    lw $a1, 0($a3) #r or d?
+    lw $t2, 16($s7) #load r
+    beq $a1, $t2, check_rr_empty
+    lw $t2, 8($s7) #load d
+    beq $a1, $t2, check_dr_empty
+    j implement_gravity
+    
+  continue_D:
     lw $t1, 256($a2) #change the 256/252 values accordingly
-    beq $t1, $zero, rpixel_rmove
+    lw $t2, 16($s7) #load r
+    beq $a1, $t2, rpixel_rmove
     sw $t1, 260($a2) #move bottom pixel
     sw $zero, 256($a2)
 
@@ -270,10 +303,32 @@ GENERATE_PILL:
     sw $zero, 4($a3)
     
     j lpixel_rmove
+
+  check_rr_empty:
+    lw $t1, 8($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_D
+  
+  check_dr_empty:
+    lw $t1, 260($a2)
+    bne $t1, $zero, implement_gravity
+    lw $t1, 4($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_D
+    
   
   respond_to_E: #Should rotate the capsule by 90 degrees anti-clockwise
+    lw $a1, 0($a3) #r or d?
+    lw $t2, 16($s7) #load r
+    beq $a1, $t2, check_ra_empty
+    lw $t2, 8($s7) #load d
+    beq $a1, $t2, check_da_empty
+    j implement_gravity
+    
+  continue_E:
     lw $t1, 4($a2) #stores the color value of the pixel to the right of the first pixel
-    beq $t1, $zero, bpixel_rotate_anti
+    lw $t2, 8($s7) #load d
+    beq $a1, $t2, bpixel_rotate_anti
     sw $t1, -256($a2)
     sw $zero, 4($a2)
     addi $a2, $a2, -256
@@ -304,10 +359,29 @@ GENERATE_PILL:
     addi $a3, $a3, 72
     
     j implement_gravity
+
+  check_ra_empty:
+    lw $t1, -256($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_E
+  check_da_empty:
+    lw $t1, 252($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_E
+  
   
   respond_to_W: #Should rotate capsule by 90 degrees clockwise
+    lw $a1, 0($a3) #r or d?
+    lw $t2, 16($s7) #load r
+    beq $a1, $t2, check_rc_empty
+    lw $t2, 8($s7) #load d
+    beq $a1, $t2, check_dc_empty
+    j implement_gravity
+    
+  continue_W:
     lw $t1, 4($a2) #stores the color value of the pixel to the right of the first pixel
-    beq $t1, $zero, bpixel_rotate_clock
+    lw $t2, 8($s7) #load d
+    beq $t2, $a1 bpixel_rotate_clock
     lw $t1, 0($a2)
     sw $t1, -252($a2)
     sw $zero, 0($a2)
@@ -336,13 +410,34 @@ GENERATE_PILL:
     addi $a3, $a3, 76
     
     j implement_gravity
+
+  check_rc_empty:
+    lw $t1, -252($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_W
+  check_dc_empty:
+    lw $t1, 260($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_W
   
   respond_to_S: #Should move the capsule to the bottom
+    beq $a3, $zero, continue_S
+    lw $a1, 0($a3) #r or d?
+    lw $t2, 16($s7) #load r
+    beq $a1, $t2, check_rd_empty
+    lw $t2, 8($s7) #load d
+    beq $a1, $t2, check_dd_empty
+    j implement_gravity
+    
+  continue_S:
     lw $t1, 4($a2)
+    lw $t2, 8($s7) #load d
+    beq $t2, $a1, bpixel_down
     beq $t1, $zero, bpixel_down
     sw $t1, 260($a2)
     sw $zero, 4($a2)
 
+    lw $t2, 16($s7) #load r
     beq $a3, $zero, fpixel_down
     lw $t1, 4($a3)
     sw $t1, 80($a3)
@@ -376,8 +471,21 @@ GENERATE_PILL:
     sw $zero, 76($a3)
     j fpixel_down
 
+  check_rd_empty:
+    lw $t1, 256($a2)
+    bne $t1, $zero, implement_gravity
+    lw $t1, 260($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_S
+  check_dd_empty:
+    lw $t1, 512($a2)
+    bne $t1, $zero, implement_gravity
+    j continue_S
+
 
 Gravity:
+
+    addi $t1, $zero, 0
   
   bring_down:
     add $t4, $zero, 1748      # Max i is 456 - 24 (since we start on the second last row) elements * 4 = 1748 + bitmap address
@@ -439,16 +547,19 @@ Gravity:
     addi $t6, $zero, 4
     div $t4, $t6
     mflo $t7
-    addi $t6, $zero, 19
+    addi $t6, $zero, 19 #original 19
     div $t7, $t6
     mflo $t6 #row
     mfhi $t8 #column
+    beq $t8, $zero, change_values_horizontal
+  continue_move_horizontal:
     sll $t8, $t8, 2 #multiply by 4
     sll $t6, $t6, 8 #multiply by 256
     addi $t8, $t8, 256 #check sometime --> why we don't need to add 4 sideways as well
     add $t5, $t5, $t8
     add $t5, $t5, $t6
 
+    addi $t1, $t1, 2
     jal change_as_horizontal
 
    continue_bring_down_for_horizontal:
@@ -480,20 +591,23 @@ Gravity:
     #add $t6, $t6, $s0
     #lw $t7, 0($t6)
     #sw $t7, 256($t6) 60 + 2560
-    addi $t5, $s0, 3356 #it does access the top left block 
+    addi $t5, $s0, 3356 #access the top left block 
     addi $t6, $zero, 4
     div $t4, $t6
     mflo $t7
-    addi $t6, $zero, 19
+    addi $t6, $zero, 19 #original 19
     div $t7, $t6
     mflo $t6 #row
     mfhi $t8 #column
+    beq $t8, $zero, change_values
+  continue_move:
     sll $t8, $t8, 2 #multiply by 4
     sll $t6, $t6, 8 #multiply by 256
     addi $t8, $t8, 256 #check sometime --> why we don't need to add 4 sideways as well
     add $t5, $t5, $t8
     add $t5, $t5, $t6
 
+    addi $t1, $t1, 1
     beq $t5, $a2, change_as
 
    continue_bring_down:
@@ -524,7 +638,16 @@ Gravity:
     beq $a3, $zero, continue_bring_down_for_horizontal
     addi $a3, $a3, 76
     jr $ra
+
+  change_values:
+    addi $t8, $zero, 19 
+    addi $t6, $t6, -1
+    j continue_move  
     
+  change_values_horizontal:
+    addi $t8, $zero, 19 
+    addi $t6, $t6, -1
+    j continue_move_horizontal 
 
 exit:
     li $v0, 10              # terminate the program gracefully
