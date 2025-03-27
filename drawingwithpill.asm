@@ -40,10 +40,15 @@ main:
     li $s3, 0xff0000        # $t1 = red
     li $t3, 0x00ff00        # $t2 = green
     li $s4, 0x0000ff        # $t3 = blue
+
     
     # Calculating colours, setting them to regs
     add $s5, $s3, $t3 #yellow
     addi $t6, $zero, 0xffffff #white
+
+    sw $s3, 0($s2) #color_array[0] = red
+    sw $s4, 4($s2) #color_array[1] = blue
+    sw $s5, 8($s2) #color_array[2] = yellow
 
     la $s7, block_array
     li $t1, 0x73 # $t1 = 's'
@@ -109,6 +114,13 @@ main:
     addi $a3, $zero, -256 # direction
     jal draw_line
 
+    add $a2, $zero, 0
+    jal Generate_Random_Virus
+    add $a2, $zero, 4
+    jal Generate_Random_Virus
+    add $a2, $zero, 8
+    jal Generate_Random_Virus
+    
     j GENERATE_PILL    # Skips the line function, so it doesn't get called accidentally
     
     # Main line drawing loop
@@ -128,10 +140,49 @@ main:
     draw_line_end:      # end for loop
     jr $ra
 
+Generate_Random_Virus:
+    li $v0 , 42
+    li $a0 , 0
+    li $a1 , 366 #generates a random number from (0,3034), stores in $a0
+    syscall #needs to store the value in the bitmap/display and the array
+
+    addi $a0, $a0, 90
+    addi $t5, $s0, 3356 #access the top left block
+    addi $t6, $zero, 19 #original 19
+    div $a0, $t6
+    mflo $t6 #row
+    mfhi $t8 #column
+    beq $t8, $zero, change_values_virus
+  continue_generating_virus:
+    sll $t8, $t8, 2 #multiply by 4
+    sll $t6, $t6, 8 #multiply by 256
+    addi $t8, $t8, 256 
+    add $t5, $t5, $t8
+    add $t5, $t5, $t6
+    add $t7, $a2, $s2
+    lw $t6, 0($t7) #needs to store color
+    lw $t8, 0($t5)
+    bne $t8, $zero, Generate_Random_Virus 
+    sw $t6, 0($t5)
+
+    addi $t5, $zero, 4
+    mult $a0, $t5
+    mflo $t5
+    add $t5, $t5, $s6
+    lw $t6, 20($s7)
+    sw $t6, 0($t5)
+
+    jr $ra
+
+  change_values_virus:
+    addi $t8, $zero, 19 
+    addi $t6, $t6, -1
+    j continue_generating_virus
+      
+    
+    
+
 GENERATE_PILL:
-    sw $s3, 0($s2) #color_array[0] = red
-    sw $s4, 4($s2) #color_array[1] = blue
-    sw $s5, 8($s2) #color_array[2] = yellow
     jal GENERATE_RANDOM_COLOR
     #sw $v0, 0($s1) 
     sw $v0, 2628($s0) #display the first pixel
