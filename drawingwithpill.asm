@@ -7,8 +7,39 @@
     .data
 color_array:        .space      12
 pill_array:         .space      16
-ADDR_DSPL:          .word 0x10008000 # The address of the bitmap display.
 ADDR_KBRD:          .word 0xffff0000
+game_over:          .word 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1
+                          1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0
+                          1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0
+                          1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1
+                          1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0
+                          1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0
+                          0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                          0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0
+                          1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1
+                          1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1
+                          1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1
+                          1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0
+                          1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0
+                          0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1
+dr_mario:           .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0
+                          0, 0, 0, 1, 1, 1, 1, 8, 6, 1, 0, 0
+                          0, 0, 4, 4, 4, 4, 4, 8, 6, 0, 0, 0
+                          0, 0, 1, 1, 1, 2, 2, 3, 2, 0, 0, 0
+                          0, 1, 2, 1, 2, 2, 2, 3, 2, 2, 2, 0
+                          0, 1, 2, 1, 1, 2, 2, 2, 3, 2, 2, 2
+                          0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 0
+                          0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0
+                          0, 0, 6, 6, 7, 6, 5, 5, 0, 0, 0, 0
+                          0, 6, 6, 6, 6, 7, 5, 6, 6, 6, 0, 0
+                          6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6, 6
+                          7, 7, 6, 6, 6, 6, 7, 7, 6, 6, 7, 7
+                          8, 8, 8, 6, 6, 6, 6, 6, 6, 8, 8, 8
+                          8, 8, 6, 6, 6, 6, 6, 6, 6, 6, 8, 8
+                          0, 0, 4, 4, 4, 0, 0, 4, 4, 4, 0, 0
+                          0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0
+                          1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1
 block_array:        .space 24
 grid:               .word 0:456     # Array of all pixels in the bottle
                                     # 24 row * 19 column grid = 456 elements
@@ -19,7 +50,8 @@ grid:               .word 0:456     # Array of all pixels in the bottle
                                     #         d pair block below                0x64
                                     #         s single block (no pair)          0x73
                                     #         v virus                           0x76
-
+                                    
+ADDR_DSPL:          .word 0x10008000 # The address of the bitmap display.
     # Padding to give enough space for the display
     .space 262144    # 256 x 256 x 4 = 262144
 
@@ -41,7 +73,6 @@ main:
     li $t3, 0x00ff00        # $t2 = green
     li $s4, 0x0000ff        # $t3 = blue
 
-    
     # Calculating colours, setting them to regs
     add $s5, $s3, $t3 #yellow
     addi $t6, $zero, 0xffffff #white
@@ -49,6 +80,23 @@ main:
     sw $s3, 0($s2) #color_array[0] = red
     sw $s4, 4($s2) #color_array[1] = blue
     sw $s5, 8($s2) #color_array[2] = yellow
+    
+#############################
+# Draws Dr Mario
+#############################
+DR_MARIO:
+    li $t1, 48  # column number
+    li $t5, 17  # row number
+    la $s0, dr_mario       # Load address of image data
+    jal DRAW_ARRAY
+    
+    # Reseting initial values, as DRAW_ARRAY Changed them
+    lw $s0, ADDR_DSPL      # $t0 = base address for display
+    la $s1, pill_array
+    la $s2, color_array #Initializing the color array
+    li $s3, 0xff0000        # $t1 = red
+    li $t3, 0x00ff00        # $t2 = green
+    li $s4, 0x0000ff        # $t3 = blue
 
     la $s7, block_array
     li $t1, 0x73 # $t1 = 's'
@@ -57,6 +105,7 @@ main:
     sw $t1, 0($s7) # block_array[0] = 's'
     sw $t2, 4($s7) # block_array[1] = 'u'
     sw $t3, 8($s7) # block_array[2] = 'd'
+    
     li $t1, 0x6c # $t1 = 'l'
     li $t2, 0x72 # $t1 = 'r'
     li $t3, 0x76 # $t1 = 'v'
@@ -178,11 +227,76 @@ Generate_Random_Virus:
     addi $t8, $zero, 19 
     addi $t6, $t6, -1
     j continue_generating_virus
-      
-    
     
 
+#############################
+# Draws 'GAME OVER' and gives option to exit/restart game
+#############################
+GAME_OVER:
+    addi $t1, $zero, 116 #column number
+    addi $t5, $zero, 15 #row number
+    la $s0, game_over       # Load address of image data
+    jal DRAW_ARRAY
+    jal RESTART_GAME
+    j exit
+
+DRAW_ARRAY: # lw $s3, 8($s2)          # Load the colour red to $s3
+    lw $s1, ADDR_DSPL       # Framebuffer base address
+    la $s2, color_array     # Load address of colour array
+
+    addi $t2, $zero, 0 #index 
+    addi $t7, $zero, 4 #number to increment by
+
+    add $v1, $s1 11332     # Address to bottom of bitmap
+    j Loop
+    
+Loop:
+    div $t2, $t1 #find which row and column we are
+    mfhi $t8 #remainder
+    mflo $t4 #result
+    beq $t4, $zero, Inside #If column == 0, continue to inside of the loop
+    beq $t8, $zero, increment_y #if row == 0, increment y by 1 (address by 256)
+
+Inside:
+    add $t9, $v1, $t8 # t9 = display address[i] in the current row
+    add $t3, $t2, $s0 # t3 = image[i]
+    lw $t3, 0($t3) #Load the value at index image[i]
+    addi $t2, $t2, 4 #Increment i by 4
+    beq $t3, 0, Loop #Check if value at image[i] is 0, if yes then skip
+    sw $s3, 0($t9) #Draw a colored pixel at index display_address[i]
+    j Loop #continue looping
+
+increment_y:
+    addi $v1, $v1, 256 #increment address by 1 row
+    beq $t4, $t5, end_drawing #Check if we have reached the 15th row, end the program if we have
+    j Inside #jump to where you were called
+
+end_drawing:
+  jr $ra
+  
+RESTART_GAME:                       # A key is pressed
+    lw $t0, ADDR_KBRD               # $t0 = base address for keyboard
+    lw $a0, 4($t0)                  # Load second word from keyboard
+    beq $a0, 0x72, restart          # Check if key s is pressed
+    beq $a0, 0x71, exit             # Check if key q is pressed, exit if so
+    j RESTART_GAME                  # Infinite loop until user restarts/ends game
+
+restart:
+    lw $a1, ADDR_DSPL
+    addi $a0, $a1, 16380
+    j paint_it_black
+paint_it_black:
+    beq $a0, $a1, main
+    sw $zero, 0($a0)
+    addi $a0, $a0, -4
+    j paint_it_black
+
 GENERATE_PILL:
+    addi $t9,$s0, 3652  # Location on bitmap of bottle mouth
+    lw $t9, 0($t9)
+    bne $t9, $zero, GAME_OVER # If bottle mouth is not empty, game ends
+    # The above is true, even when the pixel is empty! Why?
+    
     jal GENERATE_RANDOM_COLOR
     #sw $v0, 0($s1) 
     sw $v0, 2628($s0) #display the first pixel
@@ -212,9 +326,9 @@ GENERATE_PILL:
     add $t1, $s0, 12136      # Address of bottom right pixel in container +
     lw $t0, ADDR_KBRD               # $t0 = base address for keyboard
     
-  	li 		$v0, 32  #sleep for 250ms --> 0.25s
-  	li 		$a0, 450
-  	syscall
+  	# li 		$v0, 32  #sleep for 250ms --> 0.25s
+  	# li 		$a0, 450
+  	# syscall
   
     
     lw $t8, 0($t0)                  # Load first word from keyboard
@@ -228,7 +342,7 @@ GENERATE_PILL:
   loop_keyboard_detect:
     b detect_keyboard_input
   
-  keyboard_input:                     # A key is pressed
+keyboard_input:                     # A key is pressed
     lw $a0, 4($t0)                  # Load second word from keyboard
     beq $a0, 0x73, respond_to_S     # Check if key s is pressed
     addi $t5, $t6, -3
@@ -238,6 +352,7 @@ GENERATE_PILL:
     beq $a0, 0x64, respond_to_D     # Check if key d is pressed
     beq $a0, 0x77, respond_to_W     # Check if key w is pressed
     beq $a0, 0x65, respond_to_E     # Check if key e is pressed
+    beq $a0, 0x70, respond_to_P     # Check if key p is pressed
   
     li $v0, 1                       # ask system to print $a0
     syscall
@@ -533,6 +648,17 @@ GENERATE_PILL:
     bne $t1, $zero, implement_gravity
     j continue_S
 
+  respond_to_P:
+    lw $a0, 0($t0)
+    bne $a0, $zero, check_p
+    j respond_to_P
+  check_p:
+    lw $a0, 4($t0)                  # Load first word from keyboard
+    beq $a0, 0x70, unpause_game             # Check if key q is pressed, exit if so
+    j respond_to_P                  # Infinite loop until user restarts/ends game
+    
+  unpause_game:
+    j implement_gravity
 
 Gravity:
 
@@ -546,7 +672,7 @@ Gravity:
     beq $t4, $zero, exit_row_loop     # $t0 is at first index, so loop must terminate
     
     # Conditionals to check if we can/should bring down a pixel
-    # If bitmap pixel is 's', 'u', or 'd'
+    # If bitmap pixel is 's', 'u', 'd', or 'l'
     # If column below is empty
     lw $t2, 0($t0)  # loads the value in the grid array at the current index
     
