@@ -23,6 +23,7 @@ game_over:          .word 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 
                           1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0
                           1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0
                           0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1
+                          
 dr_mario:           .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0
                           0, 0, 0, 1, 1, 1, 1, 8, 6, 1, 0, 0
                           0, 0, 4, 4, 4, 4, 4, 8, 6, 0, 0, 0
@@ -40,8 +41,9 @@ dr_mario:           .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0
                           0, 0, 4, 4, 4, 0, 0, 4, 4, 4, 0, 0
                           0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0
                           1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1
+                          
 block_array:        .space 24
-grid:               .word 0:456     # Array of all pixels in the bottle
+grid:               .word 0:457     # Array of all pixels in the bottle -->changed to 457 from 456
                                     # 24 row * 19 column grid = 456 elements
                                     # Values: 0 empty spot,         In Memory:  0x0
                                     #         l pair block at left              0x6c
@@ -306,8 +308,8 @@ GENERATE_PILL:
     sw $v0, 2884($s0) #display the second pixel
     add $t6, $zero, 0 #counter for the S key
     add $a3, $zero, 0
-    add $t5, $zero, 0
-    j detect_keyboard_input
+    add $t9, $zero, -4 #changed from t5 to t9,  0 to -4
+    j check_for_moving_blocks #detect_keyboard_input
     
   
   GENERATE_RANDOM_COLOR:
@@ -326,9 +328,9 @@ GENERATE_PILL:
     add $t1, $s0, 12136      # Address of bottom right pixel in container +
     lw $t0, ADDR_KBRD               # $t0 = base address for keyboard
     
-  	# li 		$v0, 32  #sleep for 250ms --> 0.25s
-  	# li 		$a0, 450
-  	# syscall
+  	li 		$v0, 32  #sleep for 250ms --> 0.25s
+  	li 		$a0, 450
+  	syscall
   
     
     lw $t8, 0($t0)                  # Load first word from keyboard
@@ -337,16 +339,22 @@ GENERATE_PILL:
   implement_gravity:
     jal Gravity  # Simulates gravity
   continue_gravity:
-    blez $t5, loop_keyboard_detect
+    blez $t9, loop_keyboard_detect #changed from t5 to t9
     blez $t1, GENERATE_PILL
+  check_for_moving_blocks:
+    blez $t1, delete_consecutive_blocks #number of blocks moved, changed GENERATE_PILL to delete_consecutive_blocks
+    j loop_keyboard_detect
+  check_for_deleted_blocks:
+    addi $t3, $t3, -1
+    bgez $t3, implement_gravity
   loop_keyboard_detect:
     b detect_keyboard_input
   
 keyboard_input:                     # A key is pressed
     lw $a0, 4($t0)                  # Load second word from keyboard
     beq $a0, 0x73, respond_to_S     # Check if key s is pressed
-    addi $t5, $t6, -3
-    blez $t5, implement_gravity
+    #addi $t9, $t6, -3               #changed from t5 to t9
+    blez $t9, implement_gravity     #changed from t5 to t9
     beq $a0, 0x71, respond_to_Q     # Check if key q was pressed ---> Can add the upper letters as an extension (maybe giving them special functions?)
     beq $a0, 0x61, respond_to_A     # Check if key a is pressed
     beq $a0, 0x64, respond_to_D     # Check if key d is pressed
@@ -366,6 +374,7 @@ keyboard_input:                     # A key is pressed
     lw $t1, 4($s7)
     sw $t1, 116($s6)
     addi $a3, $s6, 40 #pass the value of the index in the grid array
+    addi $t9, $t9, 1
     j implement_gravity
   
   respond_to_Q: #Should quit the game
@@ -621,9 +630,9 @@ keyboard_input:                     # A key is pressed
     sw $zero, 0($a3)
     addi $a3, $a3, 76
 
-  end_of_S_loop:  
-    add $t6, $t6, 1
-    beq $t6, 4, add_pill_to_array
+  end_of_S_loop:
+    addi $t9, $t9, 1
+    beq $t9, $zero, add_pill_to_array
     j implement_gravity
   
   bpixel_down:
@@ -661,7 +670,7 @@ keyboard_input:                     # A key is pressed
     j implement_gravity
 
 Gravity:
-
+    #addi $t9, $zero, 0
     addi $t1, $zero, 0
   
   bring_down:
@@ -691,17 +700,20 @@ Gravity:
   check_l:
     lw $t3, 12($s7)  # loads first block value from block_array: 'l'
     beq $t2, $t3, check_bottom_left
-    
-    # If this is reached, the above beq were false, so check_below_row should be skipped
+
     j decrement
+
 
   check_bottom_left:
     lw $t2, 72($t0) # Loads the value in the grid array at [r + 1][c - 1]
-                      # [r + 1][c - 1] in this case is #t0 + 18 * 4 = $t0 + 72
+              
+              # [r + 1][c - 1] in this case is #t0 + 18 * 4 = $t0 + 72
     beq $t2, $zero, check_right   # [r + 1][c - 1] is empty, so we check [r + 1][c]
 
     # If this is reached, the above beq were false, so check_right should be skipped
     j decrement
+    
+
   check_right:
     lw $t2, 76($t0) # Loads the value in the grid array at [r + 1][c]
                       # [r + 1][c] in this case is #t0 + 19 * 4 = $t0 + 76
@@ -709,6 +721,8 @@ Gravity:
 
     # If this is reached, the above beq were false, so move_down_horizontal_pill should be skipped
     j decrement
+
+
   move_down_horizontal_pill:
     lw $t2, 0($t0)
     sw $t2, 76($t0)     # Stores the value of [r][c] to [r + 1][c]
@@ -768,7 +782,7 @@ Gravity:
     #add $t6, $t6, $s0
     #lw $t7, 0($t6)
     #sw $t7, 256($t6) 60 + 2560
-    addi $t5, $s0, 3356 #access the top left block 
+    addi $t5, $s0, 3356 #access the top left block from display
     addi $t6, $zero, 4
     div $t4, $t6
     mflo $t7
@@ -801,6 +815,8 @@ Gravity:
     j bring_down_loop               # calls the next iteration of the outer loop
     
   exit_row_loop:
+    #addi $9, $t9, 1
+    #beq $t9, 1, delete_consecutive_blocks
     j continue_gravity      # Jumps to update_matrix
 
   change_as:
@@ -825,6 +841,331 @@ Gravity:
     addi $t8, $zero, 19 
     addi $t6, $t6, -1
     j continue_move_horizontal 
+
+
+#######################################################
+#delete_consecutive_blocks: deletes consecutive blocks#
+#######################################################
+
+  delete_consecutive_blocks: # Used to symbolyze that everything below is for the delete function
+    addi $t3, $zero, 0      # Counter to check whether any block was deleted or not
+    add $t0, $s6, 1824      # Max i is 456 elements * 4 = 1824 + bitmap address, grid array --> changed to 1820
+    add $t1, $s0, 9576     # This is the bitmap address of the pixel at the bottom right of the bottle, initially : 12136
+    lw $t5, 0($t1)          # Loads the colour of the pixel on the bitmap at the current index
+    add $t6, $t5, $zero     # Setting the previous colour equal to the current colour, as this is required for the first loop iteration
+    li $t7, 18              # Sets max col index, as we start and the end of a row. A column has 19 elements, so max index is 18
+    j horizontal_loop                 # Jumps to code that finds and deletes consecutive horizontal blocks
+    
+  horizontal_loop: 
+    beq $t0, $s6, init_vertical_loop     # $t0 is at first index, so loop must terminate
+    lw $t5, 0($t1)                    # Loads the current bitmap colour in $t5
+    
+    lw $t2, 0($t0)  # loads the value in the grid array at the current index
+    # Conditionals to check if we can/should increase the counter
+    # If bitmap pixel is not empty
+    # AND if colour on the bitmap is the same as the current colour
+    # THEN increment the counter
+    beq $t2, $zero, reset_horizontal_counter     # Checks if spot IS empty
+    bne $t5, $t6, make_horizontal_counter_one       # Checks if current colour is NOT the same as the colour of the previous block checked, should make the counter 1
+    
+    # If this section is reached, then the current block is not empty and has the same colour as the previous block
+    addi $t4, $t4, 1        # Since the conditions are met, we found another consecutive colour, so count is increased
+    
+    # Check is count > 4
+    # If so, clear the last four blocks
+    addi $t4, $t4, -3       # Subtractring 3 from counter. If still > 0, then it was >=4
+    bgtz $t4, reset_horizontal_blocks   # checks to see if count >= 4
+    addi $t4, $t4, 3        # Reverting the counter to its previous value
+    j horizontal_decrement  #instead of j reset_horizontal_counter to keep the counter value # If this is reached, then counter < 4 so move on to check next block
+    
+reset_horizontal_blocks:    # Resets the last four blocks, #t5, t8 free
+    addi $t4, $t4, 3        # Reverting the counter to its previous value
+    
+    # Removes blocks from GRID ARRAY
+    addi $a0, $t0, 0
+    addi $a1, $zero, 0
+    jal create_single_blocks_horizontal
+    sw $zero, 0($t0)        # Resets the value at grid[r][c]
+    
+    addi $a0, $t0, 4
+    addi $a1, $zero, 4
+    jal create_single_blocks_horizontal
+    sw $zero, 4($t0)        # Resets the value at grid[r][c+ 1]
+
+    addi $a0, $t0, 8
+    addi $a1, $zero, 8
+    jal create_single_blocks_horizontal
+    sw $zero, 8($t0)        # Resets the value at grid[r][c + 2]
+
+    addi $a0, $t0, 12
+    addi $a1, $zero, 12
+    jal create_single_blocks_horizontal
+    sw $zero, 12($t0)       # Resets the value at grid[r][c + 3]
+    
+    # Removes blocks from BITMAP
+    sw $zero, 0($t1)        # Resets the value at bitmap[r][c]
+    sw $zero, 4($t1)        # Resets the value at bitmap[r][c + 1]
+    sw $zero, 8($t1)        # Resets the value at bitmap[r][c + 2]
+    sw $zero, 12($t1)       # Resets the value at bitmap[r][c + 3]
+
+    #add a counter here
+    addi $t3, $t3, 4
+    
+    j horizontal_decrement  # We do not want to trigger the next piece of code
+                            # If triggered, only four consecutive blocks will be removed at a time
+                            # However, if we skip over it now, then we allow the game to remove > 4 at a time (since counter isn't reset)
+make_horizontal_counter_one:
+    li $t4, 1
+    j horizontal_decrement
+reset_horizontal_counter: #I think there is a logical issue, should move on to the next one
+    li $t4, 0       # Resets the counter to 0, as current spot in the grid array is empty
+    j horizontal_decrement  # There is no block at the current index, reset count and move on to next spot in the playing field
+    
+horizontal_decrement:
+    # Decrimenting loop variables for the delete funciton (delete_consecutive_blocks)
+    # If col = 0, the bitmap address needs to be at the end of the above row
+    beq $t7, $zero, horizontal_special_decrement 
+    add $t1, $t1, -4    # Moves bitmap index to the left block
+    j horizontal_default_decrement
+horizontal_special_decrement:
+    add $t1, $t1, -184    # Decrimenting bitmap address so that the next location is at the end of the row above in the bottle
+    li $t4, 0        # Sets the counter to 0. This is incremented each time we find a non-empty spot on the grid
+                     # As this is the end of the row, this count must be reset
+    
+horizontal_default_decrement:   # This will be called at EACH loop iteration, as $t0 and $t4 must always be decrimented
+    # This is preparing the index value for the next iteration of the loop
+    add $t0, $t0, -4        # Decrimenting array address
+    add $t6, $zero, $t5     # Stores the colour of this iteration in $t6 to be used in the next iteration
+    addi $t7, $t7, -1       # Decriments column index
+    
+    # Loop again
+    j horizontal_loop       # calls the next iteration of the outer loop
+
+ create_single_blocks_horizontal:
+     #a0 is the place of the current element, a1 is the index
+     lw $t5, 0($a0)
+     beq $a1, $zero, check_first_pixel
+     beq $a1, 12, check_last_pixel
+     lw $t8, 4($s7)
+     beq $t5, $t8, make_up_single
+     lw $t8, 8($s7)
+     beq $t5, $t8, make_down_single
+  return_back:
+     jr $ra
+
+  check_last_pixel:
+     lw $t8, 12($s7)
+     beq $t5, $t8, return_back
+     lw $t8, 4($s7)
+     beq $t5, $t8, make_up_single
+     lw $t8, 8($s7)
+     beq $t5, $t8, make_down_single
+     lw $t8, 16($s7)
+     beq $t5, $t8, make_right_single
+     j return_back
+     
+  check_first_pixel:
+     lw $t8, 16($s7)
+     beq $t5, $t8, return_back
+     lw $t8, 4($s7)
+     beq $t5, $t8, make_up_single
+     lw $t8, 8($s7)
+     beq $t5, $t8, make_down_single
+     lw $t8, 12($s7)
+     beq $t5, $t8, make_left_single
+     j return_back
+  make_right_single:
+     lw $t5, 0($s7)
+     sw $t5, 4($a0)
+     j return_back
+  make_left_single:
+     lw $t5, 0($s7)
+     sw $t5, -4($a0)
+     j return_back
+  make_up_single:
+     lw $t5, 0($s7)
+     sw $t5, -76($a0)
+     j return_back
+
+  make_down_single:
+     lw $t5, 0($s7)
+     sw $t5, 76($a0)
+     j return_back
+
+#########################################################
+# VARIABLES:
+#########################################################
+# $s0 base address for display
+# $s1 address for grid array
+# $s2 address for block_array
+
+# $t0 i: index of current element in the grid array. Start at end of second-last row: 1748 and i - 4 each iteration
+# $t1 bitmap address: the adress of i in the bitmap (used to get the colour of the current pixel)
+# $t2 value of grid[i]
+# $t3 value of block from block_array we are comparing $t2 to --> not used/used for other purpuses
+# $t4 count: counts the amount of consecutives blocks found * 4
+#               Used for both horizontal and vertical checks, so less registers are used
+# $t5 current bitmap colour: colour of the current pixel in the bitmap
+# $t6 previous bitmap colour: The colour of the previous block that was checked
+# $t7 row count: used to tell the index of the current row
+#########################################################
+############################################
+# Loop to find and delete VERTICAL blocks
+############################################
+init_vertical_loop:
+    addi $t0, $s6, 1824      # Max i is 456 elements * 4 = 1824 + bitmap address
+    addi $t1, $s0, 9576     # This is the bitmap address of the pixel at the bottom right of the bottle
+    lw $t5, 0($t1)          # Loads the colour of the pixel on the bitmap at the current index
+    add $t6, $t5, $zero     # Setting the previous colour equal to the current colour, as this is required for the first loop iteration
+    li $t7, 23              # Sets max row index, as we start and the end of a row. A column has 24 rows, so max index is 23
+
+
+vertical_loop:
+    beq $t0, $s6, exit_vertical_loop     # $t0 is at first index, so loop must terminate
+    lw $t5, 0($t1)                    # Loads the current bitmap colour in $t5
+    
+    lw $t2, 0($t0)  # loads the value in the grid array at the current index
+    # Conditionals to check if we can/should increase the counter
+    # If bitmap pixel is not empty
+    # AND if colour on the bitmap is the same as the current colour
+    # THEN increment the counter
+    beq $t2, $zero, reset_vertical_counter     # Checks if spot IS empty
+    bne $t5, $t6, make_vertical_counter_one       # Checks if current colour is NOT the same as the colour of the previous block checked
+    
+    # If this section is reached, then the current block is not empty and has the same colour as the previous block
+    addi $t4, $t4, 1        # Since the conditions are met, we found another consecutive colour, so count is increased
+    
+    # Check is count > 4
+    # If so, clear the last four blocks
+    addi $t4, $t4, -3       # Subtractring 3 from counter. If still > 0, then it was >=4
+    bgtz $t4, reset_vertical_blocks   # checks to see if count >= 4
+    addi $t4, $t4, 3        # Reverting the counter to its previous value
+    j vertical_decrement  # If this is reached, then counter < 4 so move on to check next block
+    
+reset_vertical_blocks:    # Resets the last four blocks
+    addi $t4, $t4, 3        # Reverting the counter to its previous value
+    
+    # Removes blocks from GRID ARRAY
+    addi $a0, $t0, 0
+    addi $a1, $zero, 0
+    jal create_single_blocks_vertical
+    sw $zero, 0($t0)           # Resets the value at grid[r][c]
+    
+    addi $a0, $t0, 76
+    addi $a1, $zero, 76
+    jal create_single_blocks_vertical
+    sw $zero, 76($t0)        # Resets the value at grid[r + 1][c]
+  
+    addi $a0, $t0, 152
+    addi $a1, $zero, 152
+    jal create_single_blocks_vertical
+    sw $zero, 152($t0)        # Resets the value at grid[r + 2][c]
+    
+    addi $a0, $t0, 228
+    addi $a1, $zero, 228
+    jal create_single_blocks_vertical
+    sw $zero, 228($t0)        # Resets the value at grid[r + 3][c]
+    
+    # Removes blocks from BITMAP
+    sw $zero, 0($t1)        # Resets the value at bitmap[r][c]
+    sw $zero, 256($t1)        # Resets the value at bitmap[r + 1][c]
+    sw $zero, 512($t1)        # Resets the value at bitmap[r + 2][c]
+    sw $zero, 768($t1)       # Resets the value at bitmap[r + 3][c]
+
+    #Increment counter here
+    addi $t3, $t3, 4
+    
+    j vertical_decrement  # We do not want to trigger the next piece of code
+                            # If triggered, only four consecutive blocks will be removed at a time
+                            # However, if we skip over it now, then we allow the game to remove > 4 at a time (since counter isn't reset)
+make_vertical_counter_one:
+    li $t4, 1
+    j vertical_decrement
+reset_vertical_counter:
+    li $t4, 0       # Resets the counter to 0, as current spot in the grid array is empty
+    j vertical_decrement  # There is no block at the current index, reset count and move on to next spot in the playing field
+    
+vertical_decrement:
+    # Decrimenting loop variables for the delete funciton (delete_consecutive_blocks)
+    # If row = 0, the bitmap address needs to be at the end of the above row
+    beq $t7, $zero, vertical_special_decrement 
+    add $t1, $t1, -256       # Decrimenting the bitmap index to [r][c + 1
+    add $t0, $t0, -76        # Decrimenting array address to be at [r][c -1]
+    j vertical_default_decrement
+vertical_special_decrement:
+    add $t1, $t1, 5884    # Incrementing bitmap address so that the next location is at the bottom of the left col
+    add $t0, $t0, 1744     # Incrementing array address to be at [r + 1][c], should it be 76???
+    li $t4, 0        # Sets the counter to 0. This is incremented each time we find a non-empty spot on the grid
+                     # As this is the end of the row, this count must be reset
+    li $t7, 24 #should also init t7 again
+    
+vertical_default_decrement:   # This will be called at EACH loop iteration, as $t0 and $t4 must always be decrimented
+    # This is preparing the index value for the next iteration of the loop
+    add $t6, $zero, $t5     # Stores the colour of this iteration in $t6 to be used in the next iteration
+    addi $t7, $t7, -1       # Decriments column index
+    
+    # Loop again
+    j vertical_loop       # calls the next iteration of the outer loop
+
+ create_single_blocks_vertical:
+     #a0 is the place of the current element, a1 is the index
+     lw $t5, 0($a0)
+     beq $a1, $zero, check_first_pixel_vertical
+     beq $a1, 228, check_last_pixel_vertical
+     lw $t8, 16($s7)
+     beq $t5, $t8, make_right_single_vertical
+     lw $t8, 12($s7)
+     beq $t5, $t8, make_left_single_vertical
+  return_back_vertical:
+     jr $ra
+
+  check_last_pixel_vertical:
+     lw $t8, 4($s7)
+     beq $t5, $t8, return_back_vertical
+     lw $t8, 8($s7)
+     beq $t5, $t8, make_down_single_vertical
+     lw $t8, 16($s7)
+     beq $t5, $t8, make_right_single_vertical
+     lw $t8, 12($s7)
+     beq $t5, $t8, make_left_single_vertical
+     j return_back_vertical
+
+     
+  check_first_pixel_vertical:
+     lw $t8, 8($s7)
+     beq $t5, $t8, return_back_vertical
+     lw $t8, 4($s7)
+     beq $t5, $t8, make_up_single_vertical
+     lw $t8, 12($s7)
+     beq $t5, $t8, make_left_single_vertical
+     lw $t8, 16($s7)
+     beq $t5, $t8, make_right_single_vertical
+     j return_back_vertical
+
+  make_right_single_vertical:
+     lw $t5, 0($s7)
+     sw $t5, 4($a0)
+     j return_back_vertical
+     
+  make_left_single_vertical:
+     lw $t5, 0($s7)
+     sw $t5, -4($a0)
+     j return_back_vertical
+     
+  make_up_single_vertical:
+     lw $t5, 0($s7)
+     sw $t5, -76($a0)
+     j return_back_vertical
+
+  make_down_single_vertical:
+     lw $t5, 0($s7)
+     sw $t5, 76($a0)
+     j return_back_vertical
+
+    
+exit_vertical_loop:
+    #check if there were any deleted blocks to bring down
+    j check_for_deleted_blocks
 
 exit:
     li $v0, 10              # terminate the program gracefully
