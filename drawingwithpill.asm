@@ -115,7 +115,7 @@ delete_virus:       .word   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-                          
+multiple_pill_array:.space 40
 block_array:        .space 24
 grid:               .word 0:457     # Array of all pixels in the bottle -->changed to 457 from 456
                                     # 24 row * 19 column grid = 456 elements
@@ -290,7 +290,8 @@ DR_MARIO:
     li $t9, 450
     sw $t9, 0($sp)
     
-    j GENERATE_PILL    # Skips the line function, so it doesn't get called accidentally
+    #li $t7, 1
+    j pill_array_init    # Skips the line function, so it doesn't get called accidentally
     
     # Main line drawing loop
     initialize_and_draw:
@@ -408,7 +409,7 @@ get_from_stack:
 # Sound Effect Functions
 ########################
 # Plays block destruction sound
-play_block_destroy:
+  play_block_destroy:
     addi $sp, $sp, -8
     sw $ra, 0($sp)
     sw $s0, 4($sp)
@@ -552,28 +553,145 @@ paint_it_black:
     addi $a0, $a0, -4
     j paint_it_black
 
-GENERATE_PILL:
+  pill_array_init: #address of first display 2628
+    la $s4, multiple_pill_array
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 0($s4) 
+    jal GENERATE_RANDOM_COLOR
+    sw $v0, 4($s4) #display the second pixel
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 8($s4) 
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 12($s4) 
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 16($s4) 
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 20($s4) 
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 24($s4) 
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 28($s4) 
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 32($s4) 
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 36($s4) 
+
+    li $v0, 0xe06616
+    addi $t9, $s0, 5084
+    sw $v0, -256($t9)
+    sw $v0, -252($t9)
+    sw $v0, -260($t9)
+    sw $v0, -4($t9)
+    sw $v0, 4($t9)
+    sw $v0, 252($t9)
+    sw $v0, 260($t9)
+    sw $v0, 512($t9)
+    sw $v0, 508($t9)
+    sw $v0, 516($t9)
+
+    addi $t9, $s0, 6364
+    sw $v0, -256($t9)
+    sw $v0, -252($t9)
+    sw $v0, -260($t9)
+    sw $v0, -4($t9)
+    sw $v0, 4($t9)
+    sw $v0, 252($t9)
+    sw $v0, 260($t9)
+    sw $v0, 512($t9)
+    sw $v0, 508($t9)
+    sw $v0, 516($t9)
+
+    addi $t9, $s0, 7644
+    sw $v0, -256($t9)
+    sw $v0, -252($t9)
+    sw $v0, -260($t9)
+    sw $v0, -4($t9)
+    sw $v0, 4($t9)
+    sw $v0, 252($t9)
+    sw $v0, 260($t9)
+    sw $v0, 512($t9)
+    sw $v0, 508($t9)
+    sw $v0, 516($t9)
+
+    addi $t9, $s0, 8924
+    sw $v0, -256($t9)
+    sw $v0, -252($t9)
+    sw $v0, -260($t9)
+    sw $v0, -4($t9)
+    sw $v0, 4($t9)
+    sw $v0, 252($t9)
+    sw $v0, 260($t9)
+    sw $v0, 512($t9)
+    sw $v0, 508($t9)
+    sw $v0, 516($t9)    
+    
+
+  GENERATE_PILL:
     jal store_to_stack
     jal play_new_pill
     jal get_from_stack
     
-    addi $t9,$s0, 3652  # Location on bitmap of bottle mouth
+    add $t9, $s0, 3652  # Location on bitmap of bottle mouth 
     lw $t9, 0($t9)
     bne $t9, $zero, GAME_OVER # If bottle mouth is not empty, game ends
     # The above is true, even when the pixel is empty! Why?
     
-    jal GENERATE_RANDOM_COLOR
-    #sw $v0, 0($s1) 
-    sw $v0, 2628($s0) #display the first pixel
+    lw $v0, 0($s4)
+    sw $v0, 2628($s0)
+    lw $v0, 4($s4)
+    sw $v0, 2884($s0) 
+    
+    lw $v0, 8($s4)
+    sw $v0, 5084($s0)
+    lw $v0, 12($s4)
+    sw $v0, 5340($s0)
+
+    lw $v0, 16($s4)
+    sw $v0, 6364($s0)
+    lw $v0, 20($s4)
+    sw $v0, 6620($s0)
+
+    lw $v0, 24($s4)
+    sw $v0, 7644($s0)
+    lw $v0, 28($s4)
+    sw $v0, 7900($s0)
+
+    lw $v0, 32($s4)
+    sw $v0, 8924($s0)
+    lw $v0, 36($s4)
+    sw $v0, 9180($s0)
+    
+    lw $v0, 8($s4)
+    sw $v0, 0($s4)
+    lw $v0, 12($s4)
+    sw $v0, 4($s4)
+
+    lw $v0, 16($s4)
+    sw $v0, 8($s4)
+    lw $v0, 20($s4)
+    sw $v0, 12($s4)
+
+    lw $v0, 24($s4)
+    sw $v0, 16($s4)
+    lw $v0, 28($s4)
+    sw $v0, 20($s4)
+
+    lw $v0, 32($s4)
+    sw $v0, 24($s4)
+    lw $v0, 36($s4)
+    sw $v0, 28($s4)
+
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 32($s4) 
+    jal GENERATE_RANDOM_COLOR #color in v0
+    sw $v0, 36($s4) 
+    
     addi $a2, $s0, 2628 #assigns the location of the first byte to be passed as an argument
-    jal GENERATE_RANDOM_COLOR
-    #sw $v0, 8($s1)
-    sw $v0, 2884($s0) #display the second pixel
     add $t6, $zero, 0 #counter for the S key
     add $a3, $zero, 0
     add $t9, $zero, -4 #changed from t5 to t9,  0 to -4
+   # beq $t7, 1, generate_second_pill
     j check_for_moving_blocks #detect_keyboard_input
-    
   
   GENERATE_RANDOM_COLOR:
     li $v0 , 42
