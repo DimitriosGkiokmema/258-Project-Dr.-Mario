@@ -2,7 +2,7 @@
 # This file contains our implementation of Dr Mario.
 #
 # Student 1: Defne Eris, 1010127596
-# Student 2: Dimitrios Gkiokmema, 010372286
+# Student 2: Dimitrios Gkiokmema, 1010372286
 #
 # We assert that the code submitted here is entirely our own 
 # creation, and will indicate otherwise when it is not.
