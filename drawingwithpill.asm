@@ -1,46 +1,120 @@
+################# CSC258 Assembly Final Project: Dr. Mario ###################
+# This file contains our implementation of Dr Mario.
+#
+# Student 1: Name, Student Number
+# Student 2: Name, Student Number (if applicable)
+#
+# We assert that the code submitted here is entirely our own 
+# creation, and will indicate otherwise when it is not.
+#
+######################## Bitmap Display Configuration ########################
+# - Unit width in pixels:       4
+# - Unit height in pixels:      4
+# - Display width in pixels:    256
+# - Display height in pixels:   256
+# - Base Address for Display:   0x10008000 ($gp)
 ##############################################################################
-# Draws lines + pixels
-# Given x, y, length, and a direction, this draws the line
-# If given length 1, a single pixel is drawn
-# 256x256 --> 2x2
 ##############################################################################
     .data
 color_array:        .space      12
 pill_array:         .space      16
 ADDR_KBRD:          .word 0xffff0000
-game_over:          .word 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1
-                          1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0
-                          1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0
-                          1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1
-                          1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0
-                          1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0
-                          0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-                          0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0
-                          1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1
-                          1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1
-                          1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1
-                          1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0
-                          1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0
-                          0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1
-                          
-dr_mario:           .word 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0
-                          0, 0, 0, 1, 1, 1, 1, 8, 6, 1, 0, 0
-                          0, 0, 4, 4, 4, 4, 4, 8, 6, 0, 0, 0
-                          0, 0, 1, 1, 1, 2, 2, 3, 2, 0, 0, 0
-                          0, 1, 2, 1, 2, 2, 2, 3, 2, 2, 2, 0
-                          0, 1, 2, 1, 1, 2, 2, 2, 3, 2, 2, 2
-                          0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 0
-                          0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0
-                          0, 0, 6, 6, 7, 6, 5, 5, 0, 0, 0, 0
-                          0, 6, 6, 6, 6, 7, 5, 6, 6, 6, 0, 0
-                          6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6, 6
-                          7, 7, 6, 6, 6, 6, 7, 7, 6, 6, 7, 7
-                          8, 8, 8, 6, 6, 6, 6, 6, 6, 8, 8, 8
-                          8, 8, 6, 6, 6, 6, 6, 6, 6, 6, 8, 8
-                          0, 0, 4, 4, 4, 0, 0, 4, 4, 4, 0, 0
-                          0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0
-                          1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1
+game_over:        .word 0, 0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000, 
+                        0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000, 
+                        0xff0000,  0,  0,  0,  0,  0,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000, 
+                        0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000, 
+                        0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000, 
+                        0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0, 
+                        0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0, 
+                        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 
+                        0xff0000,  0xff0000,  0xff0000,  0,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0,  0xff0000, 
+                        0,  0,  0,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0,  0xff0000,  0xff0000,  0,  0,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000, 
+                        0,  0,  0,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0,  0xff0000,  0xff0000,  0,  0,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000, 
+                        0,  0,  0,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000,
+                        0,  0,  0,  0xff0000,  0,  0,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,
+                        0,  0,  0,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0,  0,  0,  0,  0xff0000,  0xff0000,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000,  0,  0,
+                        0xff0000,  0xff0000,  0xff0000,  0,  0,  0,  0,  0,  0xff0000,  0,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0,  0xff0000,  0xff0000,  0,  0,  0,  0,  0xff0000,  0xff0000,  0xff0000
+dr_mario:         .word      0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x000000,     0x000000,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x000000,     0x939393,     0x7f7f7f,     0x8e8e8e,     0x1e1e1e,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x000000,     0x000000,     0x000000,     0x000000,     0x1a0905,     0x080301,     0xb8b8b8,     0x2a2a2a,     0x303030,     0x0a0a0a,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x020101,     0x251310,     0x4d2c24,     0x4d2c24,     0x4d2c24,     0x3f2019,     0x2b0f08,     0x080301,     0xb8b8b8,     0x2a2a2a,     0x959595,     0x2c2c2c,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x060201,     0x190c0a,     0x1a1a1a,     0x212121,     0x212121,     0x212121,     0x161616,     0x0f0f0f,     0x939393,     0x7f7f7f,     0x8e8e8e,     0x1e1e1e,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x040404,     0x272727,     0x4c4c4c,     0x545454,     0x212121,     0x212121,     0x161616,     0x0f0f0f,     0x000000,     0x000000,     0x0d0d0d,     0x040404,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x000000,     0x1f1f1f,     0x292929,     0x1c1c1c,     0x101010,     0x251e16,     0xc2ac93,     0xcccccc,     0xcccccc,     0xbfa281,     0xcccccc,     0x565656,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x000000,     0x1e1e1e,     0x121212,     0x3a211b,     0x61372e,     0xebbe8a,     0xf5dabb,     0xffffff,     0x333333,     0xf2cea4,     0x999999,     0x000000,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x251e16,     0x5f3f31,     0x61372e,     0xf5c894,     0xffdcb5,     0xffedd8,     0x84725d,     0xffd7a9,     0xc1af9b,     0x614f3a,     0x5e4c37,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x5e4c37,     0xd1a47b,     0xbf9471,     0xe0b88b,     0x66543f,     0x66543f,     0xe0b88b,     0xffd29e,     0xffd29e,     0xfacd99,     0xedc08c,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x120f0b,     0xa28360,     0xfbce9a,     0xf4c997,     0x7a644b,     0x000000,     0x282119,     0x332a1f,     0x332a1f,     0x332a1f,     0x2f261c,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x705b42,     0xeec391,     0xfbce9a,     0xfdd09c,     0x80694e,     0x2f261b,     0x2f261b,     0x1c1610,     0x000000,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x222222,     0x545454,     0x816c53,     0x8f7455,     0x94795a,     0x8d7252,     0x8d7252,     0x8d7252,     0x544431,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x1e1e1e,     0xbababa,     0xededed,     0x959595,     0x303030,     0x828282,     0x606060,     0x8d2713,     0x8d2713,     0x3a3a3a,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x333333,     0xffffff,     0xffffff,     0x545454,     0x161616,     0x8f8f8f,     0xd7d7d7,     0xd8b6b0,     0xf44a28,     0xcacaca,     0x515151,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x000000,     0xdcdcdc,     0xffffff,     0xcbcbcb,     0x434343,     0xdcdcdc,     0x909090,     0x8b8b8b,     0xb8b8b8,     0xcc4529,     0x878787,     0x1d1d1d,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x000000,     0xdcdcdc,     0xffffff,     0x666666,     0xa9a9a9,     0xffffff,     0xc2c2c2,     0x737373,     0x5e5e5e,     0x5e5e5e,     0xa6a6a6,     0x5b5b5b,     0x333333,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x000000,     0x717171,     0xe5e5e5,     0xa8a8a8,     0x5d5d5d,     0xeaeaea,     0xffffff,     0xffffff,     0xb3b3b3,     0xb3b3b3,     0xf4f4f4,     0x5b5b5b,     0x808080,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x000000,     0xd4d4d4,     0xf6f6f6,     0xe1e1e1,     0xb2b2b2,     0x4e4e4e,     0xdcdcdc,     0xf1f1f1,     0xefefef,     0xd4d4d4,     0xfbfbfb,     0x626262,     0x808080,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x000000,     0xcccccc,     0xcccccc,     0xcccccc,     0xb0b0b0,     0x424242,     0xc9c9c9,     0xcbcbcb,     0xcccccc,     0xb0b0b0,     0xbebebe,     0x434343,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x180e0c,     0x301b17,     0x261612,     0x7f726f,     0x606060,     0x4c3c39,     0x3e241f,     0x261612,     0x261612,     0x0f0907,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x3e241f,     0x8d5246,     0x683b31,     0x59322a,     0x3a211b,     0x3c231d,     0x895044,     0x844c41,     0x764339,     0x492922,     0x3a211b,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,
+                             0x010101,     0x010101,     0x010101,     0x010101,     0x000000,     0x0c0706,     0x1f120f,     0x150c0a,     0x130b09,     0x130b09,     0x070403,     0x180e0c,     0x1f120f,     0x1a0f0d,     0x130b09,     0x130b09,     0x000000,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101,     0x010101
+red_virus:          .word   0x000000,  0x000000,  0x000000,  0xff0000,  0x000000,  0xff0000,  0x000000,  0x000000,  0x000000,  0x000000,  0x000000,  0x000000,  0xff0000,
+                            0xff0000,  0x000000,  0xff0000,  0x000000,  0xff0000,  0x000000,  0x000000,  0xff0000,  0x000000,  0x000000,  0x000000,  0x000000,
+                            0xff0000,  0xff0000,  0xff0000,  0x000000,  0xff0000,  0x000000,  0xff0000,  0x000000,  0x000000,  0xff0000,  0x000000,  0x000000,
+                            0x000000,  0xff0000,  0xff0000,  0x000000,  0xff0000,  0xff0000,  0xff0000,  0x000000,  0xff0000,  0x000000,  0x000000,  0x000000,
+                            0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,
+                            0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0x000000,  0x000000,
+                            0xff0000,  0xff0000,  0x000000,  0xff0000,  0xff0000,  0xff0000,  0x000000,  0xff0000,  0xff0000,  0x000000,  0x000000,  0x000000,
+                            0xff0000,  0x000000,  0xff0000,  0x000000,  0xff0000,  0x000000,  0xff0000,  0x000000,  0xff0000,  0xff0000,  0xff0000,  0x000000,
+                            0xff0000,  0x000000,  0x000000,  0x000000,  0xff0000,  0x000000,  0x000000,  0x000000,  0xff0000,  0x000000,  0x000000,  0xff0000,
+                            0xff0000,  0xff0000,  0x000000,  0xff0000,  0xff0000,  0xff0000,  0x000000,  0xff0000,  0xff0000,  0xff0000,  0x000000,  0x000000,
+                            0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0x000000,
+                            0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0x000000,  0x000000,  0xff0000,
+                            0x000000,  0xff0000,  0x000000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0xff0000,  0x000000,  0x000000,
+                            0xff0000,  0x000000,  0x000000,  0x000000,  0xff0000,  0x000000,  0x000000,  0x000000,  0xff0000,  0x000000,  0x000000,  0x000000,
+                            0x000000,  0x000000,  0xff0000,  0x000000,  0x000000,  0xff0000,  0x000000,  0xff0000,  0x000000,  0xff0000,  0x000000
+yellow_virus:        .word  0x000000,  0x000000,  0x000000,  0xffff00,  0x000000,  0xffff00,  0x000000,  0x000000,  0x000000,  0x000000,  0x000000,  0x000000,  0xffff00,
+                            0xffff00,  0x000000,  0xffff00,  0x000000,  0xffff00,  0x000000,  0x000000,  0xffff00,  0x000000,  0x000000,  0x000000,  0x000000,
+                            0xffff00,  0xffff00,  0xffff00,  0x000000,  0xffff00,  0x000000,  0xffff00,  0x000000,  0x000000,  0xffff00,  0x000000,  0x000000,
+                            0x000000,  0xffff00,  0xffff00,  0x000000,  0xffff00,  0xffff00,  0xffff00,  0x000000,  0xffff00,  0x000000,  0x000000,  0x000000,
+                            0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,
+                            0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0x000000,  0x000000,
+                            0xffff00,  0xffff00,  0x000000,  0xffff00,  0xffff00,  0xffff00,  0x000000,  0xffff00,  0xffff00,  0x000000,  0x000000,  0x000000,
+                            0xffff00,  0x000000,  0xffff00,  0x000000,  0xffff00,  0x000000,  0xffff00,  0x000000,  0xffff00,  0xffff00,  0xffff00,  0x000000,
+                            0xffff00,  0x000000,  0x000000,  0x000000,  0xffff00,  0x000000,  0x000000,  0x000000,  0xffff00,  0x000000,  0x000000,  0xffff00,
+                            0xffff00,  0xffff00,  0x000000,  0xffff00,  0xffff00,  0xffff00,  0x000000,  0xffff00,  0xffff00,  0xffff00,  0x000000,  0x000000,
+                            0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0x000000,
+                            0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0x000000,  0x000000,  0xffff00,
+                            0x000000,  0xffff00,  0x000000,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0xffff00,  0x000000,  0x000000,
+                            0xffff00,  0x000000,  0x000000,  0x000000,  0xffff00,  0x000000,  0x000000,  0x000000,  0xffff00,  0x000000,  0x000000,  0x000000,
+                            0x000000,  0x000000,  0xffff00,  0x000000,  0x000000,  0xffff00,  0x000000,  0xffff00,  0x000000,  0xffff00,  0x000000
+blue_virus:         .word   0x000000,  0x000000,  0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x000000,  0x000000,  0x000000,  0x000000,  0x0000ff,
+                            0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x000000,  0x000000,
+                            0x0000ff,  0x0000ff,  0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x0000ff,  0x000000,  0x000000,
+                            0x000000,  0x0000ff,  0x0000ff,  0x000000,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x000000,
+                            0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,
+                            0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,  0x000000,
+                            0x0000ff,  0x0000ff,  0x000000,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,  0x0000ff,  0x0000ff,  0x000000,  0x000000,  0x000000,
+                            0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,
+                            0x0000ff,  0x000000,  0x000000,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x0000ff,
+                            0x0000ff,  0x0000ff,  0x000000,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,  0x000000,
+                            0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,
+                            0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,  0x000000,  0x0000ff,
+                            0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x0000ff,  0x000000,  0x000000,
+                            0x0000ff,  0x000000,  0x000000,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x000000,
+                            0x000000,  0x000000,  0x0000ff,  0x000000,  0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x000000,  0x0000ff,  0x000000
+delete_virus:       .word   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                           
 block_array:        .space 24
 grid:               .word 0:457     # Array of all pixels in the bottle -->changed to 457 from 456
@@ -87,12 +161,52 @@ main:
 # Draws Dr Mario
 #############################
 DR_MARIO:
-    li $t1, 48  # column number
-    li $t5, 17  # row number
+    li $t1, 96  # column number
+    li $t5, 24  # row number
     la $s0, dr_mario       # Load address of image data
+    lw $v1, ADDR_DSPL
+    add $v1, $v1, 3720     # Address to bottom of bitmap
     jal DRAW_ARRAY
     
-    # Reseting initial values, as DRAW_ARRAY Changed them
+#############################
+# Draws Red Virus
+#############################    
+    li $t1, 48  # column number
+    li $t5, 15  # row number
+    la $s0, red_virus       # Load address of image data
+    lw $v1, ADDR_DSPL
+    add $v1, $v1, 11040     # Address to bottom of bitmap
+    jal DRAW_ARRAY
+
+#############################
+# Draws Yellow Virus
+#############################    
+    li $t1, 48  # column number
+    li $t5, 15  # row number
+    la $s0, yellow_virus       # Load address of image data
+    lw $v1, ADDR_DSPL
+    add $v1, $v1, 11100     # Address to bottom of bitmap
+    jal DRAW_ARRAY
+
+#############################
+# Draws Blue Virus
+#############################    
+    li $t1, 48  # column number
+    li $t5, 15  # row number
+    la $s0, blue_virus       # Load address of image data
+    lw $v1, ADDR_DSPL
+    add $v1, $v1, 11160     # Address to bottom of bitmap
+    jal DRAW_ARRAY
+    
+    # Deletes virus - reference later
+    # li $t1, 48  # column number
+    # li $t5, 15  # row number
+    # la $s0, delete_virus       # Load address of image data
+    # lw $v1, ADDR_DSPL
+    # add $v1, $v1, 11160     # Address to bottom of bitmap
+    # jal DRAW_ARRAY
+    
+# Reseting initial values, as DRAW_ARRAY Changed them
     lw $s0, ADDR_DSPL      # $t0 = base address for display
     la $s1, pill_array
     la $s2, color_array #Initializing the color array
@@ -172,6 +286,10 @@ DR_MARIO:
     add $a2, $zero, 8
     jal Generate_Random_Virus
     
+    addi $sp, $sp, -4
+    li $t9, 450
+    sw $t9, 0($sp)
+    
     j GENERATE_PILL    # Skips the line function, so it doesn't get called accidentally
     
     # Main line drawing loop
@@ -230,6 +348,153 @@ Generate_Random_Virus:
     addi $t6, $t6, -1
     j continue_generating_virus
     
+# Stores all s, t, a, and v registers to the stack
+store_to_stack:
+    addi $sp, $sp, -92       # Allocate space for 22 registers (22 × 4 = 88)
+    sw $s0, 0($sp)           # Store $s0
+    sw $s1, 4($sp)           # Store $s1
+    sw $s2, 8($sp)           # Store $s2
+    sw $s3, 12($sp)          # Store $s3
+    sw $s4, 16($sp)          # Store $s4
+    sw $s5, 20($sp)          # Store $s5
+    sw $s6, 24($sp)          # Store $s6
+    sw $s7, 28($sp)          # Store $s7
+    sw $t0, 32($sp)          # Store $t0
+    sw $t1, 36($sp)          # Store $t1
+    sw $t2, 40($sp)          # Store $t2
+    sw $t3, 44($sp)          # Store $t3
+    sw $t4, 48($sp)          # Store $t4
+    sw $t5, 52($sp)          # Store $t5
+    sw $t6, 56($sp)          # Store $t6
+    sw $t7, 60($sp)          # Store $t7
+    sw $t8, 64($sp)          # Store $t8
+    sw $t9, 68($sp)          # Store $t9
+    sw $v0, 72($sp)          # Store $v0
+    sw $a0, 76($sp)          # Store $a0
+    sw $a1, 80($sp)          # Store $a1
+    sw $a2, 84($sp)          # Store $a2
+    sw $a3, 88($sp)          # Store $a3
+    jr $ra                   # Return
+
+# Restores all s, t, a, and v registers from the stack
+get_from_stack:
+    lw $s0, 0($sp)           # Restore $s0
+    lw $s1, 4($sp)           # Restore $s1
+    lw $s2, 8($sp)           # Restore $s2
+    lw $s3, 12($sp)          # Restore $s3
+    lw $s4, 16($sp)          # Restore $s4
+    lw $s5, 20($sp)          # Restore $s5
+    lw $s6, 24($sp)          # Restore $s6
+    lw $s7, 28($sp)          # Restore $s7
+    lw $t0, 32($sp)          # Restore $t0
+    lw $t1, 36($sp)          # Restore $t1
+    lw $t2, 40($sp)          # Restore $t2
+    lw $t3, 44($sp)          # Restore $t3
+    lw $t4, 48($sp)          # Restore $t4
+    lw $t5, 52($sp)          # Restore $t5
+    lw $t6, 56($sp)          # Restore $t6
+    lw $t7, 60($sp)          # Restore $t7
+    lw $t8, 64($sp)          # Restore $t8
+    lw $t9, 68($sp)          # Restore $t9
+    lw $v0, 72($sp)          # Restore $v0
+    lw $a0, 76($sp)          # Restore $a0
+    lw $a1, 80($sp)          # Restore $a1
+    lw $a2, 84($sp)          # Restore $a2
+    lw $a3, 88($sp)          # Restore $a3
+    addi $sp, $sp, 92        # Restore stack pointer
+    jr $ra                   # Return
+    
+########################
+# Sound Effect Functions
+########################
+# Plays block destruction sound
+play_block_destroy:
+    addi $sp, $sp, -8
+    sw $ra, 0($sp)
+    sw $s0, 4($sp)
+    
+    # Play descending tones
+    li $a0, 80   # Pitch (MIDI note)
+    li $a1, 200  # Duration (ms)
+    li $a2, 0    # Instrument (piano)
+    li $a3, 100  # Volume
+    li $v0, 31   # Syscall for tone generation
+    syscall
+    
+    li $a0, 300  # Delay between notes
+    li $v0, 32
+    syscall
+    
+    li $a0, 75   # Second note
+    li $a1, 200
+    li $v0, 31
+    syscall
+    
+    li $a0, 300
+    li $v0, 32
+    syscall
+    
+    li $a0, 70   # Third note
+    li $a1, 200
+    li $v0, 31
+    syscall
+    
+    lw $ra, 0($sp)
+    lw $s0, 4($sp)
+    addi $sp, $sp, 8
+    jr $ra
+
+# Plays new pill sound  
+play_new_pill:
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    
+    # Play ascending arpeggio
+    li $a0, 72
+    li $a1, 150
+    li $a2, 0
+    li $a3, 100
+    li $v0, 31
+    syscall
+    
+    li $a0, 100
+    li $v0, 32
+    syscall
+    
+    li $a0, 76
+    li $a1, 150
+    li $v0, 31
+    syscall
+    
+    li $a0, 100
+    li $v0, 32
+    syscall
+    
+    li $a0, 79
+    li $a1, 150
+    li $v0, 31
+    syscall
+    
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    jr $ra
+
+# Plays pill rotation sound
+play_rotate_pill:
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)
+    
+    # Short blip sound
+    li $a0, 84
+    li $a1, 50
+    li $a2, 0
+    li $a3, 100
+    li $v0, 31
+    syscall
+    
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
+    jr $ra
 
 #############################
 # Draws 'GAME OVER' and gives option to exit/restart game
@@ -243,15 +508,10 @@ GAME_OVER:
     j exit
 
 DRAW_ARRAY: # lw $s3, 8($s2)          # Load the colour red to $s3
-    lw $s1, ADDR_DSPL       # Framebuffer base address
-    la $s2, color_array     # Load address of colour array
-
     addi $t2, $zero, 0 #index 
     addi $t7, $zero, 4 #number to increment by
-
-    add $v1, $s1 11332     # Address to bottom of bitmap
     j Loop
-    
+
 Loop:
     div $t2, $t1 #find which row and column we are
     mfhi $t8 #remainder
@@ -264,8 +524,7 @@ Inside:
     add $t3, $t2, $s0 # t3 = image[i]
     lw $t3, 0($t3) #Load the value at index image[i]
     addi $t2, $t2, 4 #Increment i by 4
-    beq $t3, 0, Loop #Check if value at image[i] is 0, if yes then skip
-    sw $s3, 0($t9) #Draw a colored pixel at index display_address[i]
+    sw $t3, 0($t9) #Draw a colored pixel at index display_address[i]
     j Loop #continue looping
 
 increment_y:
@@ -294,6 +553,10 @@ paint_it_black:
     j paint_it_black
 
 GENERATE_PILL:
+    jal store_to_stack
+    jal play_new_pill
+    jal get_from_stack
+    
     addi $t9,$s0, 3652  # Location on bitmap of bottle mouth
     lw $t9, 0($t9)
     bne $t9, $zero, GAME_OVER # If bottle mouth is not empty, game ends
@@ -328,10 +591,9 @@ GENERATE_PILL:
     add $t1, $s0, 12136      # Address of bottom right pixel in container +
     lw $t0, ADDR_KBRD               # $t0 = base address for keyboard
     
-  	li 		$v0, 32  #sleep for 250ms --> 0.25s
-  	li 		$a0, 450
+    lw $a0, 0($sp)  # Gets sleep duration from stack
+  	li $v0, 32  #sleep for $a0 ms 
   	syscall
-  
     
     lw $t8, 0($t0)                  # Load first word from keyboard
     beq $t8, 1, keyboard_input      # If first word 1, key is pressed
@@ -660,6 +922,22 @@ keyboard_input:                     # A key is pressed
   respond_to_P:
     lw $a0, 0($t0)
     bne $a0, $zero, check_p
+    
+    addi $sp, $sp, -4
+    sw $t9, 0($sp)
+    
+    # Painting pause symbol
+    li $t9, 0xffffff    # Setting colour
+    sw $t9, 520($s0)
+    sw $t9, 776($s0)
+    sw $t9, 1032($s0)
+    sw $t9, 528($s0)
+    sw $t9, 784($s0)
+    sw $t9, 1040($s0)
+    
+    lw $t9, 0($sp)
+    addi $sp, $sp, 4
+    
     j respond_to_P
   check_p:
     lw $a0, 4($t0)                  # Load first word from keyboard
@@ -667,6 +945,15 @@ keyboard_input:                     # A key is pressed
     j respond_to_P                  # Infinite loop until user restarts/ends game
     
   unpause_game:
+    # Removing pause symbol
+    li $zero, 0xffffff    # Setting colour
+    sw $zero, 520($s0)
+    sw $zero, 776($s0)
+    sw $zero, 1032($s0)
+    sw $zero, 528($s0)
+    sw $zero, 784($s0)
+    sw $zero, 1040($s0)
+    
     j implement_gravity
 
 Gravity:
@@ -911,6 +1198,16 @@ reset_horizontal_blocks:    # Resets the last four blocks, #t5, t8 free
     #add a counter here
     addi $t3, $t3, 4
     
+    sw $t9, -4($sp)         # Store current value of $t9 in stack
+    lw $t9, 0($sp)
+    addi $t9, $t9, -50      # Decreases sleep duration (makes game faster)
+    sw $t9, 0($sp)
+    lw $t9, -4($sp)         # Get back current $t9 from stack
+    
+    jal store_to_stack
+    jal play_block_destroy
+    jal get_from_stack
+    
     j horizontal_decrement  # We do not want to trigger the next piece of code
                             # If triggered, only four consecutive blocks will be removed at a time
                             # However, if we skip over it now, then we allow the game to remove > 4 at a time (since counter isn't reset)
@@ -1071,6 +1368,16 @@ reset_vertical_blocks:    # Resets the last four blocks
     sw $zero, 256($t1)        # Resets the value at bitmap[r + 1][c]
     sw $zero, 512($t1)        # Resets the value at bitmap[r + 2][c]
     sw $zero, 768($t1)       # Resets the value at bitmap[r + 3][c]
+    
+    sw $t9, -4($sp)         # Store current value of $t9 in stack
+    lw $t9, 0($sp)
+    addi $t9, $t9, -50      # Decreases sleep duration (makes game faster)
+    sw $t9, 0($sp)
+    lw $t9, -4($sp)         # Get back current $t9 from stack
+    
+    jal store_to_stack
+    jal play_block_destroy
+    jal get_from_stack
 
     #Increment counter here
     addi $t3, $t3, 4
