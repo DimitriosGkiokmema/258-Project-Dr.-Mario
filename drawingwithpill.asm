@@ -504,6 +504,8 @@ GAME_OVER:
     addi $t1, $zero, 116 #column number
     addi $t5, $zero, 15 #row number
     la $s0, game_over       # Load address of image data
+    lw $v1, ADDR_DSPL 
+    add $v1, $v1, 11100     # Address to bottom of bitmap
     jal DRAW_ARRAY
     jal RESTART_GAME
     j exit
